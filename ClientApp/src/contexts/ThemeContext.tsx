@@ -9,9 +9,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   children
 }) => {
   const [theme, setTheme] = useState<Theme>(() => {
-    // Get theme from localStorage or default to 'system'
+    // Get theme from localStorage or default to 'light'
     const savedTheme = localStorage.getItem('theme') as Theme;
-    return savedTheme || 'system';
+    return savedTheme || 'light';
   });
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
   // Handle system theme changes
