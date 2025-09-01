@@ -5,6 +5,9 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 
+// API configuration
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5147/api';
+
 // Type definitions for SMS results
 interface SmsResult {
     PhoneNumber: string;
@@ -63,7 +66,7 @@ export const SmsPage: React.FC = () => {
 
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch('http://localhost:5147/api/sms/send', {
+            const response = await fetch(`${API_BASE_URL}/sms/send`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -116,7 +119,7 @@ export const SmsPage: React.FC = () => {
 
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch('http://localhost:5147/api/sms/send-bulk', {
+            const response = await fetch(`${API_BASE_URL}/sms/send-bulk`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

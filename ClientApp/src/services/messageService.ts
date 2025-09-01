@@ -95,7 +95,7 @@ export class MessageService {
    * Get all conversations for the current user
    */
   async getConversations(): Promise<Conversation[]> {
-    const response = await api.get('/api/message/conversations');
+    const response = await api.get('/message/conversations');
     return response.data;
   }
 
@@ -103,7 +103,7 @@ export class MessageService {
    * Get messages in a specific thread
    */
   async getMessagesInThread(threadId: string): Promise<Message[]> {
-    const response = await api.get(`/api/message/thread/${threadId}`);
+    const response = await api.get(`/message/thread/${threadId}`);
     return response.data;
   }
 
@@ -111,7 +111,7 @@ export class MessageService {
    * Get a specific message by ID
    */
   async getMessage(messageId: number): Promise<Message> {
-    const response = await api.get(`/api/message/${messageId}`);
+    const response = await api.get(`/message/${messageId}`);
     return response.data;
   }
 
@@ -119,21 +119,21 @@ export class MessageService {
    * Mark a message as read
    */
   async markAsRead(messageId: number): Promise<void> {
-    await api.post(`/api/message/${messageId}/read`);
+    await api.post(`/message/${messageId}/read`);
   }
 
   /**
    * Archive a message
    */
   async archiveMessage(messageId: number): Promise<void> {
-    await api.post(`/api/message/${messageId}/archive`);
+    await api.post(`/message/${messageId}/archive`);
   }
 
   /**
    * Search messages
    */
   async searchMessages(request: MessageSearchRequest): Promise<MessageSearchResponse> {
-    const response = await api.post('/api/message/search', request);
+    const response = await api.post('/message/search', request);
     return response.data;
   }
 
@@ -141,7 +141,7 @@ export class MessageService {
    * Get authorized contacts for messaging
    */
   async getContacts(): Promise<Contact[]> {
-    const response = await api.get('/api/message/contacts');
+    const response = await api.get('/message/contacts');
     return response.data;
   }
 
@@ -149,7 +149,7 @@ export class MessageService {
    * Check if current user can send message to another user
    */
   async canSendMessage(receiverId: number): Promise<boolean> {
-    const response = await api.get(`/api/message/can-message/${receiverId}`);
+    const response = await api.get(`/message/can-message/${receiverId}`);
     return response.data.canSend;
   }
 
@@ -157,7 +157,7 @@ export class MessageService {
    * Get unread message count for current user
    */
   async getUnreadCount(): Promise<number> {
-    const response = await api.get('/api/message/unread-count');
+    const response = await api.get('/message/unread-count');
     return response.data.unreadCount;
   }
 }
