@@ -2,12 +2,12 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import Button from '../components/ui/Button';
-import { Check, ArrowRight, Shield, Clock, Users, Heart } from 'lucide-react';
+import { ArrowRight, Shield, Clock, Users, Heart } from 'lucide-react';
 const LandingPage: React.FC = () => {
   // Implement smooth scrolling for anchor links
   useEffect(() => {
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-      anchor.addEventListener('click', function (e) {
+      anchor.addEventListener('click', function (this: HTMLAnchorElement, e) {
         e.preventDefault();
         const target = document.querySelector(this.getAttribute('href') || '');
         if (target) {

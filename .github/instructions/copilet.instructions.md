@@ -44,3 +44,5 @@ applyTo: '**'
 - Always ask questions if you're unsure about something. If a request is unclear, ask for clarification instead of guessing
 - *Append to this instructions file as you learn new things about the project.*
 - After each feature implementation, add an entry to the changelog, detailing the changes made and any relevant context.
+
+API url for the dev server is http://localhost:5147/ prod api is at https://nuturepath-26112d8101f3.herokuapp.com/

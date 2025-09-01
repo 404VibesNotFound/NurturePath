@@ -27,8 +27,8 @@ builder.Services.AddCors(options =>
         {
             // Allow specific origin
             b.WithOrigins(
-                    "http://localhost:4200",
-                    "https://your-production-url.com"
+                    "http://localhost:5173/",
+                    "https://nuturepath-26112d8101f3.herokuapp.com/"
                 )
                 // Allow any HTTP headers
                 .AllowAnyHeader()

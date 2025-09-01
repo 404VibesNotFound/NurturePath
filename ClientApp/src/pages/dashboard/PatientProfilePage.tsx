@@ -2,7 +2,7 @@ import React from 'react';
 import { useParams } from 'react-router-dom';
 import Card, { CardContent, CardHeader } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
-import { User, Calendar, FileText, MessageCircle, Phone, Mail, Clock, CheckCircle } from 'lucide-react';
+import { User, FileText, MessageCircle, Phone, Mail, Clock, CheckCircle } from 'lucide-react';
 const PatientProfilePage: React.FC = () => {
   const {
     patientId
