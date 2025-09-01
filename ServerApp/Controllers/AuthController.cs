@@ -11,6 +11,7 @@ namespace ServerApp.Controllers
 {
     /// <summary>
     /// Handles authentication operations including user registration, login, and user group management
+    /// Enhanced for healthcare communication platform with role-based authentication
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
@@ -35,112 +36,188 @@ namespace ServerApp.Controllers
         }
 
         /// <summary>
-        /// Registers a new user in the system
+        /// Registers a new user in the healthcare communication system
         /// </summary>
-        /// <param name="userForRegisterDto">User registration data including username, password, and group</param>
-        /// <returns>HTTP 201 Created on success, BadRequest on validation failure or duplicate username</returns>
-        [HttpPost("register")] //<host>/api/auth/register
+        /// <param name="userForRegisterDto">User registration data including email, name, password, and role</param>
+        /// <returns>HTTP 201 Created on success, BadRequest on validation failure or duplicate email</returns>
+        [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] UserForRegisterDto userForRegisterDto)
-        { //Data Transfer Object containing username and password.
+        {
             // Validate the incoming request data against model validation rules
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // Convert username to lowercase for consistent storage and comparison
-            userForRegisterDto.Username = userForRegisterDto.Username.ToLower(); //Convert username to lower case before storing in database.
+            // Convert email to lowercase for consistent storage and comparison
+            userForRegisterDto.Email = userForRegisterDto.Email.ToLower();
 
-            // Check if a user with this username already exists
-            if (await _repo.UserExists(userForRegisterDto.Username))
-                return BadRequest("Username is already taken");
+            // Check if a user with this email already exists
+            if (await _repo.EmailExists(userForRegisterDto.Email))
+                return BadRequest("Email is already registered");
+
+            // Generate username from email if not provided (for legacy compatibility)
+            var username = userForRegisterDto.Username ?? userForRegisterDto.Email.Split('@')[0];
+            
+            // Check if username already exists (for legacy support)
+            if (await _repo.UserExists(username))
+            {
+                // Generate a unique username by appending timestamp
+                username = $"{username}_{DateTime.UtcNow.Ticks}";
+            }
 
             // Create new user entity with provided data
             var userToCreate = new User
             {
-                // Set username from DTO
-                Username = userForRegisterDto.Username,
-                // Assign user to specified group
-                UserGroupId = userForRegisterDto.Group
+                Email = userForRegisterDto.Email,
+                Username = username,
+                FirstName = userForRegisterDto.FirstName,
+                LastName = userForRegisterDto.LastName,
+                Role = userForRegisterDto.Role,
+                UserGroupId = userForRegisterDto.Group // Legacy support
             };
 
             // Register the user with hashed password in repository
-            await _repo.Register(userToCreate, userForRegisterDto.Password);
+            var createdUser = await _repo.Register(userToCreate, userForRegisterDto.Password);
 
-            // Return HTTP 201 Created status
-            return StatusCode(201);
+            // Return HTTP 201 Created status with user info (excluding sensitive data)
+            return StatusCode(201, new 
+            { 
+                Id = createdUser.Id,
+                Email = createdUser.Email,
+                FirstName = createdUser.FirstName,
+                LastName = createdUser.LastName,
+                Role = createdUser.Role.ToString(),
+                Message = "User registered successfully"
+            });
         }
 
         /// <summary>
         /// Authenticates a user and returns a JWT token on successful login
         /// </summary>
-        /// <param name="userForRegisterDto">User login credentials including username and password</param>
+        /// <param name="userForLoginDto">User login credentials including email/username and password</param>
         /// <returns>JWT token on success, Unauthorized on invalid credentials, Internal Server Error on configuration issues</returns>
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] UserForLoginDto userForRegisterDto)
+        public async Task<IActionResult> Login([FromBody] UserForLoginDto userForLoginDto)
         {
+            // Support both legacy username and new email-based login
+            var emailOrUsername = userForLoginDto.EmailOrUsername ?? userForLoginDto.Username;
+            
+            if (string.IsNullOrEmpty(emailOrUsername))
+                return BadRequest("Email or username is required");
+
             // Attempt to authenticate user with provided credentials
-            var userFromRepo = await _repo.Login(userForRegisterDto.Username.ToLower(), userForRegisterDto.Password);
+            var userFromRepo = await _repo.Login(emailOrUsername.ToLower(), userForLoginDto.Password);
+            
             // Check if authentication failed
-            if (userFromRepo == null) //User login failed
-                return Unauthorized();
+            if (userFromRepo == null)
+                return Unauthorized("Invalid credentials");
 
             // Prepare JWT token generation components
             var tokenHandler = new JwtSecurityTokenHandler();
+            
             // Retrieve JWT secret from configuration
-
             var secret = Environment.GetEnvironmentVariable("APPSETTINGS_SECRET");
-            var value = "";
-            if (secret != null)
+            if (string.IsNullOrEmpty(secret))
             {
-                value = secret;
-            }
-            else
-            {
-                value = _config.GetSection("AppSettings:Secret").Value;
+                secret = _config.GetSection("AppSettings:Secret").Value;
             }
             
-            if (value != null)
+            if (string.IsNullOrEmpty(secret))
             {
-                // Convert secret to byte array for signing
-                var key = Encoding.ASCII.GetBytes(value);
-                // Create token descriptor with user claims
-                var tokenDescriptor = new SecurityTokenDescriptor
-                {
-                    // Set user identity claims (ID, username, role)
-                    Subject = new ClaimsIdentity(new Claim[]{
-                        new Claim(ClaimTypes.NameIdentifier,userFromRepo.Id.ToString()),
-                        new Claim(ClaimTypes.Name, userFromRepo.Username),
-                        new Claim(ClaimTypes.Role, userFromRepo.UserGroupId.ToString())
-                    }),
-                    // Set token expiration to 24 hours from now
-                    Expires = DateTime.Now.AddDays(1),
-                    // Configure token signing with HMAC-SHA512
-                    SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha512Signature)
-                };
-
-                // Generate the actual JWT token
-                var token = tokenHandler.CreateToken(tokenDescriptor);
-                // Convert token to string format
-                var tokenString = tokenHandler.WriteToken(token);
-
-                // Return token in response body
-                return Ok(new { tokenString });
+                return StatusCode(500, "JWT configuration is missing");
             }
 
-            // Return error if JWT configuration is missing
-            return StatusCode(500);
+            // Convert secret to byte array for signing
+            var key = Encoding.ASCII.GetBytes(secret);
+            
+            // Create token descriptor with user claims
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                // Set user identity claims (ID, email, name, role)
+                Subject = new ClaimsIdentity(new Claim[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, userFromRepo.Id.ToString()),
+                    new Claim(ClaimTypes.Email, userFromRepo.Email),
+                    new Claim(ClaimTypes.Name, $"{userFromRepo.FirstName} {userFromRepo.LastName}"),
+                    new Claim(ClaimTypes.GivenName, userFromRepo.FirstName),
+                    new Claim(ClaimTypes.Surname, userFromRepo.LastName),
+                    new Claim(ClaimTypes.Role, userFromRepo.Role.ToString()),
+                    new Claim("Role", userFromRepo.Role.ToString()),
+                    // Legacy support
+                    new Claim("UserGroupId", userFromRepo.UserGroupId?.ToString() ?? "0")
+                }),
+                // Set token expiration to 24 hours from now
+                Expires = DateTime.UtcNow.AddDays(1),
+                // Configure token signing with HMAC-SHA512
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha512Signature)
+            };
+
+            // Generate the actual JWT token
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            // Convert token to string format
+            var tokenString = tokenHandler.WriteToken(token);
+
+            // Return token and user information in response body
+            return Ok(new 
+            { 
+                Token = tokenString,
+                User = new 
+                {
+                    Id = userFromRepo.Id,
+                    Email = userFromRepo.Email,
+                    FirstName = userFromRepo.FirstName,
+                    LastName = userFromRepo.LastName,
+                    Role = userFromRepo.Role.ToString(),
+                    FullName = $"{userFromRepo.FirstName} {userFromRepo.LastName}"
+                }
+            });
         }
 
         /// <summary>
-        /// Retrieves all available user groups for registration purposes
+        /// Retrieves all available user groups for registration purposes (legacy support)
         /// </summary>
         /// <returns>List of available user groups with their IDs and names</returns>
-        [HttpGet("get-user-groups")] //<host>/api/auth/get-user-groups
+        [HttpGet("get-user-groups")]
         public async Task<IActionResult> UserGroups()
         {
             // Fetch all user groups from repository
             var groups = await _repo.UserGroups();
             // Return groups as JSON response
             return Ok(groups);
+        }
+
+        /// <summary>
+        /// Gets available user roles for registration
+        /// </summary>
+        /// <returns>List of available user roles</returns>
+        [HttpGet("roles")]
+        public IActionResult GetRoles()
+        {
+            var roles = Enum.GetValues<UserRole>()
+                .Select(role => new 
+                {
+                    Id = (int)role,
+                    Name = role.ToString(),
+                    Description = GetRoleDescription(role)
+                })
+                .ToList();
+
+            return Ok(roles);
+        }
+
+        /// <summary>
+        /// Gets description for user roles
+        /// </summary>
+        /// <param name="role">User role</param>
+        /// <returns>Role description</returns>
+        private string GetRoleDescription(UserRole role)
+        {
+            return role switch
+            {
+                UserRole.Patient => "Expecting mothers and patients receiving care",
+                UserRole.Provider => "Healthcare providers (midwives, doctors, nurses)",
+                UserRole.Family => "Family members with authorized access",
+                _ => role.ToString()
+            };
         }
     }
 }

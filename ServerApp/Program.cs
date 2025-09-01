@@ -18,17 +18,18 @@ var corsPolicy = "AllowedOrigins";
 /// </summary>
 
 // Add services to the container.
-// Configure CORS for Angular frontend communication
+// Configure CORS for frontend communication
 builder.Services.AddCors(options =>
 {
     // Define CORS policy for allowed origins
     options.AddPolicy(corsPolicy,
         b =>
         {
-            // Allow specific origin
+            // Allow specific origins (remove trailing slashes)
             b.WithOrigins(
-                    "http://localhost:5173/",
-                    "https://nuturepath-26112d8101f3.herokuapp.com/"
+                    "http://localhost:5173",
+                    "http://localhost:3000",
+                    "https://nuturepath-26112d8101f3.herokuapp.com"
                 )
                 // Allow any HTTP headers
                 .AllowAnyHeader()
