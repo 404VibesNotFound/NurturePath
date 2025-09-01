@@ -29,7 +29,7 @@ builder.Services.AddCors(options =>
             b.WithOrigins(
                     "http://localhost:5173",
                     "http://localhost:3000",
-                    "https://nuturepath-26112d8101f3.herokuapp.com"
+                    "https://nuturepath.netlify.app"
                 )
                 // Allow any HTTP headers
                 .AllowAnyHeader()
