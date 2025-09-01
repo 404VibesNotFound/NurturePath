@@ -1,0 +1,60 @@
+name: Deploy Web API
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'  # Adjust according to your .NET version
+
+    - name: Restore dependencies
+      run: dotnet restore ServerApp.sln
+
+    - name: Build solution
+      run: dotnet build ServerApp.sln --no-restore --configuration Release
+
+    - name: Run tests
+      run: dotnet test ServerApp.sln --no-restore --configuration Release
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Login to Heroku
+      env:
+        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        HEROKU_EMAIL: ${{ secrets.HEROKU_EMAIL }}
+      run: |
+        echo "machine api.heroku.com" >> ~/.netrc
+        echo "  login $HEROKU_EMAIL" >> ~/.netrc
+        echo "  password $HEROKU_API_KEY" >> ~/.netrc
+        echo "machine git.heroku.com" >> ~/.netrc
+        echo "  login $HEROKU_EMAIL" >> ~/.netrc
+        echo "  password $HEROKU_API_KEY" >> ~/.netrc
+
+    - name: Install Heroku CLI
+      run: curl https://cli-assets.heroku.com/install.sh | sh
+
+    - name: Deploy to Heroku
+      env:
+        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+      run: |
+        heroku git:remote -a eventlyfy
+        git filter-branch -- --all
+        git push heroku main --force

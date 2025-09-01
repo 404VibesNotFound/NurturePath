@@ -1,0 +1,26 @@
+{
+  "UserGroups": [
+    {
+      "Id": 1,
+      "GroupName": "ADMINISTRATOR"
+    },
+    {
+      "Id": 2,
+      "GroupName": "NORMAL_USER"
+    }
+  ],
+  "Todos": [
+    {
+      "Id": 1,
+      "Name": "Sample Todo 1"
+    },
+    {
+      "Id": 2,
+      "Name": "Sample Todo 2"
+    },
+    {
+      "Id": 3,
+      "Name": "Complete project setup"
+    }
+  ]
+}

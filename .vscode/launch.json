@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "coreclr",
+      "request": "launch",
+      "name": "Launch ASP.NET Core (net8.0)",
+      "program": "${workspaceFolder}/ServerApp/bin/Debug/net8.0/ServerApp.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/ServerApp",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
+        "uriFormat": "%s/swagger"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "preLaunchTask": "build"
+    }
+  ]
+}

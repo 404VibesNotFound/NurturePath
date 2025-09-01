@@ -1,0 +1,21 @@
+{
+  "User": {
+    "Id": "integer",
+    "Username": "string",
+    "PasswordHash": "byte[]",
+    "PasswordSalt": "byte[]",
+    "UserGroupId": "integer (FK -> UserGroup.Id)",
+    "UserGroup": {
+      "$ref": "UserGroup"
+    }
+  },
+  "UserGroup": {
+    "Id": "integer",
+    "GroupName": "string (nullable)",
+    "Users": [
+      {
+        "$ref": "User"
+      }
+    ]
+  }
+}
