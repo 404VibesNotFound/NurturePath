@@ -103,7 +103,7 @@ class PatientService {
   /**
    * Get all patients with pagination
    */
-  async getPatients(page: number = 1, pageSize: number = 10): Promise<PatientsResponse> {
+  async getPatients(page = 1, pageSize = 10): Promise<PatientsResponse> {
     const response = await fetch(`${API_BASE_URL}/patient?page=${page}&pageSize=${pageSize}`, {
       method: 'GET',
       headers: {
@@ -253,7 +253,7 @@ class PatientService {
     }
 
     const users = await response.json();
-    return users.map((user: any) => ({
+    return users.map((user: { id: number; firstName: string; lastName: string }) => ({
       id: user.id,
       name: `${user.firstName} ${user.lastName}`,
     }));

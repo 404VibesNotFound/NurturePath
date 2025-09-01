@@ -2,12 +2,10 @@ import React, { useState, useEffect } from 'react';
 import Card, { CardContent, CardHeader } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
-import { Search, Filter, AlertTriangle, CheckCircle, MoreVertical, Plus, X, Calendar, Phone, Mail, MapPin } from 'lucide-react';
+import { Search, Filter, AlertTriangle, CheckCircle, MoreVertical, Plus, X } from 'lucide-react';
 import { patientService, Patient, CreatePatientRequest } from '../../services/patientService';
-import { useAuth } from '../../hooks/useAuth';
 
 const CareCoordinationPage: React.FC = () => {
-  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [patients, setPatients] = useState<Patient[]>([]);
   const [isLoading, setIsLoading] = useState(true);
