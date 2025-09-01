@@ -29,8 +29,8 @@ jobs:
       - name: Run lint
         run: npm run lint  # Lint your code for errors
 
-      # - name: Run tests
-      #   run: npm test  # Run your Next.js unit tests
+      - name: Run tests
+        run: npm test  # Run your Next.js unit tests
 
       - name: Build ReactJs App
         run: npm run build # Build the app in production mode

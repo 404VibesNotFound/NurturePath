@@ -460,3 +460,4 @@ FodyWeavers.xsd
 # PlayWrite
 playwright-report/
 test-results/
+reports/

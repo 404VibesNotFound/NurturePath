@@ -1,0 +1,40 @@
+{
+  "name": "nurturepath-e2e-automation",
+  "version": "1.0.0",
+  "description": "End-to-end test automation for NurturePath healthcare platform using Playwright with TypeScript",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "test:report": "playwright show-report",
+    "test:install": "playwright install",
+    "test:admin": "playwright test admin-login.spec.ts",
+    "test:chrome": "playwright test --project=chromium",
+    "test:firefox": "playwright test --project=firefox",
+    "test:safari": "playwright test --project=webkit",
+    "lint": "tsc --noEmit",
+    "clean": "rimraf reports/html-report reports/screenshots/* reports/results.*"
+  },
+  "keywords": [
+    "playwright",
+    "typescript",
+    "e2e",
+    "automation",
+    "healthcare",
+    "testing",
+    "nurturepath"
+  ],
+  "author": "GitHub Copilot",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@types/node": "^24.3.0",
+    "typescript": "^5.9.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+}

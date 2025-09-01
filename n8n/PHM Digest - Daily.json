@@ -1,0 +1,305 @@
+{
+  "name": "PHM Digest - Daily",
+  "nodes": [
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1ch8lgz-JMA0sOeLIJ3QJ2DRBv84q34HlfVjbMCynWgg/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ch8lgz-JMA0sOeLIJ3QJ2DRBv84q34HlfVjbMCynWgg/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "phm_email",
+              "lookupValue": "shohanperera03@gmail.com"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": false
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        512,
+        224
+      ],
+      "id": "4b64f792-bbf2-4d44-b134-dda087cab5a0",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hjjllOwSfHNZ1HEK",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Mode: Run Once for All Items (recommended)\n// Input item contains: { period: 'daily' | 'weekly' }\n\nconst period = ($json.period || 'daily').toLowerCase();\n\nconst now = new Date();\nconst end = new Date(now);\nconst start = new Date(now);\nstart.setDate(now.getDate() - (period === 'weekly' ? 7 : 1));\n\nreturn [{\n  period,\n  start: start.toISOString(),\n  end: end.toISOString()\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        336,
+        64
+      ],
+      "id": "6771711b-76a4-4564-b381-c5ec0ce83163",
+      "name": "Set Period Window"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        192
+      ],
+      "id": "82057356-dfd6-4b2d-898b-85070cd4137c",
+      "name": "Schedule — Daily 06:00"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        -80
+      ],
+      "id": "c72f283c-a8c6-4db4-92d2-debcd45572df",
+      "name": "Schedule — Weekly Mon 06:05"
+    },
+    {
+      "parameters": {
+        "jsCode": "const period = ($items(\"Set Period Window\")[0]?.json?.period || 'daily');\n\nconst rows = items.map(i => i.json).filter(r => r.phm_email);\nconst map = {};\nfor (const r of rows) {\n  const key = r.phm_email.trim().toLowerCase();\n  if (!map[key]) {\n    map[key] = { period, phm_email: key, phm_name: r.phm_name || '', regions: new Set(),\n                 vaccines:{}, checkups:{}, total:0, rows:[] };\n  }\n  map[key].regions.add(r.region || '');\n  const bucket = (r.type || '').toLowerCase() === 'vaccine' ? 'vaccines' : 'checkups';\n  const code = r.code || 'unknown';\n  map[key][bucket][code] = (map[key][bucket][code] || 0) + 1;\n  map[key].total += 1;\n  map[key].rows.push({ patient_id:r.patient_id, name:r.patient_name_short, gn_area:r.region,\n                       type:(r.type||'').toLowerCase(), code:r.code, due_date:r.due_date });\n}\nconst out = [];\nfor (const k of Object.keys(map)) {\n  const g = map[k];\n  if (g.total > 0) out.push({ json: { ...g, regions: [...g.regions].filter(Boolean) } });\n}\nreturn out;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        928,
+        224
+      ],
+      "id": "f933acb3-5cd3-4338-b155-31c2e769a9fc",
+      "name": "Group by PHM"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3536a496-0ec0-4852-882b-a7875f9e9fcd",
+              "leftValue": "={{$json.total}}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "ignoreCase": false
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        432
+      ],
+      "id": "67b7922c-72a9-49ad-a3d0-3f1b079bd515",
+      "name": "IF any rows"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Read window from Set Period Window; fall back to last 24h if missing\nlet ctx; try { ctx = $items(\"Set Period Window\")[0].json; } catch(e) { ctx = null; }\nconst now = new Date();\nconst start = ctx?.start ? new Date(ctx.start) : new Date(now.getTime() - 24*60*60*1000);\nconst end   = ctx?.end   ? new Date(ctx.end)   : now;\n\n// Google Sheets dates can be text (YYYY-MM-DD) or a serial number\nfunction parseSheetDate(v){\n  if (v === undefined || v === null || v === \"\") return null;\n  if (typeof v === \"number\") { const ms = Math.round((v - 25569) * 86400 * 1000); return new Date(ms); }\n  const d = new Date(String(v)); return isNaN(d) ? null : d;\n}\n\nconst out = [];\nfor (const it of items) {\n  const r = it.json;\n  const d = parseSheetDate(r.due_date);\n  if (d && d >= start && d <= end) out.push({ json: r });\n}\nreturn out.length ? out : items; // let items through if nothing matched (for testing)"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        224
+      ],
+      "id": "a2686827-06cf-49c4-ac73-c753c1f231ea",
+      "name": "Filter by Window"
+    },
+    {
+      "parameters": {
+        "jsCode": "function toCSV(rows){\n  const headers = ['patient_id','name','gn_area','type','code','due_date'];\n  const esc = v => (v==null?'':String(v).replace(/\"/g,'\"\"'));\n  const lines = [headers.join(',')];\n  for (const r of rows) lines.push(headers.map(h=>`\"${esc(r[h])}\"`).join(','));\n  return lines.join('\\n');\n}\nreturn items.map(it => {\n  const csv = toCSV(it.json.rows || []);\n  const fileName = `defaulters_${(it.json.phm_name||'phm').replace(/\\s+/g,'_')}_${new Date().toISOString().slice(0,10)}.csv`;\n  return {\n    json: { ...it.json, fileName },\n    binary: {\n      file: { data: Buffer.from(csv,'utf8'), mimeType:'text/csv', fileName }\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1296,
+        224
+      ],
+      "id": "b05018c4-038a-4222-b669-685cfc98f410",
+      "name": "Make CSV"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.phm_email }}",
+        "subject": "The list for missing patients ",
+        "message": "Hello",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1680,
+        416
+      ],
+      "id": "02842b3e-eab6-4efc-b349-c110f5c5cff3",
+      "name": "Send a message",
+      "webhookId": "b1cc22b5-b718-4b44-a54d-2d28ab9e5f26",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YmrnsiohiNuJ4bDP",
+          "name": "Gmail OAuth2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Filter by Window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Period Window": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule — Daily 06:00": {
+      "main": [
+        [
+          {
+            "node": "Set Period Window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule — Weekly Mon 06:05": {
+      "main": [
+        [
+          {
+            "node": "Set Period Window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Group by PHM": {
+      "main": [
+        [
+          {
+            "node": "IF any rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter by Window": {
+      "main": [
+        [
+          {
+            "node": "Group by PHM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF any rows": {
+      "main": [
+        [
+          {
+            "node": "Make CSV",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Make CSV": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5478d79a-bdc1-47c3-9d19-da057921cfa8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6a8a747e3139b293141370b369aaceef5a6d99d8589d2f9852857e4c79a81f7e"
+  },
+  "id": "MhmMOYY8qn9ncjXa",
+  "tags": []
+}

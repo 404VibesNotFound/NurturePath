@@ -1,0 +1,453 @@
+{
+  "name": "Support Ticket Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -672,
+        -144
+      ],
+      "id": "48527878-8d50-4866-b8ed-da8f460ff113",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YmrnsiohiNuJ4bDP",
+          "name": "Gmail OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7949d71b-da43-4629-9515-ceb27ad6a539",
+              "name": "body",
+              "value": "={{ $json.snippet }}",
+              "type": "string"
+            },
+            {
+              "id": "8ac6aaf5-bf78-47b8-852b-1f30cfdd09a4",
+              "name": "subject",
+              "value": "={{ $json.Subject }}",
+              "type": "string"
+            },
+            {
+              "id": "34b72a40-4bbc-4aa6-8733-10e51731d5f8",
+              "name": "from",
+              "value": "={{ $json.From }}",
+              "type": "string"
+            },
+            {
+              "id": "f4163f9c-b5c8-4554-846c-7ce9f2a2bb36",
+              "name": "sessionId",
+              "value": "={{ $json.threadId }}",
+              "type": "string"
+            },
+            {
+              "id": "8587bcce-13fd-483f-93e3-bd6aff892c5c",
+              "name": "messageId",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -224,
+        -160
+      ],
+      "id": "a4ba77b7-5946-4292-978d-4203bad62e4f",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f45c7b58-b0e4-495f-85bf-2c7cdb93f282",
+              "leftValue": "={{ $json.From }}",
+              "rightValue": "outlook",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -464,
+        -144
+      ],
+      "id": "a7fda33b-e1cd-4792-a008-82411f5f858a",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "={{ $json.output.discord_message }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        672,
+        -64
+      ],
+      "id": "d301d755-bce3-4645-99c3-80f4d8aebcaf",
+      "name": "Discord",
+      "webhookId": "366b47cc-00b3-493a-9449-52e334f89c8b",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "ToE2SZCgy1xYWkNl",
+          "name": "Discord Support Webhook"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Email body: {{ $json.body }}\nEmail subject: {{ $json.subject }}\nEmail sender: {{ $json.from }}\nId: {{ $json.messageId }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a customer support agent who tends to  emails by our customers regarding new feature requests, bugs and other support queries. \n\nYou are an AI agent responsible for handling customer support queries.\n\nYou will receive the following inputs:\n\nEmail subject\nEmail body\nEmail sender (from)\n\nYour tasks are:\n\nClassify the email as either a bug report or a feature request.\n\nBug report: If the customer is describing unexpected behavior, errors, issues, crashes, or problems.\n\nFeature request: If the customer is asking for an improvement, enhancement, or new capability.\n\nBased on the classification, generate a JSON object in the output parser\n\nOutput generation rules:\n\nid: messageId from user\ntype: \"FEATURE\" or \"BUG\"\nsms_message: A short 1–2 line summary of the issue/request suitable for SMS to be sent out to support team.\n\ndiscord_message: A concise but slightly more detailed version suitable for a Discord channel update for support team.\n\ntrello.name: The title for the Trello card (should be short and clear, include \"Bug:\" or \"Feature:\" prefix).\n\ntrello.description: A detailed description, combining the subject, sender, and body of the email.\n\nemail_reply.subject: A polite, professional subject line for replying to the customer.\n\nemail_reply.body: A courteous reply tailored to whether it’s a bug or feature request:\n\nFor bugs: Acknowledge the issue, thank the customer, confirm the team will investigate.\n\nFor features: Thank the customer for the suggestion, confirm the request is noted, and mention it will be reviewed.\n\nImportant Notes:\n\nAlways maintain a professional and polite tone in the email reply.\nEnsure the JSON output is valid, complete, and does not contain placeholders.\n\nDo not include explanations outside the JSON output."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        96,
+        -256
+      ],
+      "id": "a2790ab6-e1ba-4474-84fb-13d98f285a56",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        144,
+        16
+      ],
+      "id": "94ec6e24-5e39-4588-aaf3-1b61966301ec",
+      "name": "Memory"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        16
+      ],
+      "id": "4924d7f2-4b56-4b92-a8fa-c664413d8ab0",
+      "name": "Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "sAWAM9f2ugzWYSzv",
+          "name": "Google Gemini(PaLM) API "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "listId": "68ae06739403fa08405733da",
+        "name": "={{ $json.output.trello.name }}",
+        "description": "={{ $json.output.trello.description }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.trello",
+      "typeVersion": 1,
+      "position": [
+        960,
+        224
+      ],
+      "id": "fd4f36b8-2e97-478f-8b07-91583a142f7b",
+      "name": "Create a Feature",
+      "credentials": {
+        "trelloApi": {
+          "id": "EMi7Q5n6lI1M9KAc",
+          "name": "Trello Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "listId": "68adf439f77935381fe18a48",
+        "name": "={{ $json.output.trello.name }}",
+        "description": "={{ $json.output.trello.description }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.trello",
+      "typeVersion": 1,
+      "position": [
+        960,
+        32
+      ],
+      "id": "e94b4087-0d8e-4981-8fc3-22cb878a5ec5",
+      "name": "Create a Support Ticket",
+      "credentials": {
+        "trelloApi": {
+          "id": "EMi7Q5n6lI1M9KAc",
+          "name": "Trello Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "755f2cee-54fe-48b1-9a16-f3ffd090b53b",
+              "leftValue": "={{ $json.output.type }}",
+              "rightValue": "BUG",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        128
+      ],
+      "id": "512bc7e7-0c57-466f-affa-cb46ad04512f",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n    \"messageId\": \"abc123\",\n    \"type\": \"BUG\",\n    \"sms_message\": \"Bug: Production imports.\",\n    \"discord_message\": \"Imports not working in production for Nishan Chathuranga.\",\n    \"trello\": {\n      \"name\": \"Bug: Imports Not Working in Production\",\n      \"description\": \"**From:** Nishan Chathuranga <nishan.chathuranga@outlook.com>\\n**Subject:** Imports Not Working in Production\\n**Body:** Hi Support Team, We're experiencing an issue where imports are not working in the production environment.\"\n    },\n    \"email_reply\": {\n      \"subject\": \"Re: Imports Not Working in Production - Bug Report Acknowledged\",\n      \"body\": \"Dear Nishan Chathuranga,\\n\\nThank you for reporting this issue. We understand that imports are not working in the production environment, despite functioning correctly in development.\"\n    }\n  }"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        352,
+        16
+      ],
+      "id": "c6aa68bc-c7dc-4aab-bbc6-c0bb97e699e8",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $json.output.messageId }}",
+        "message": "={{ $json.output.email_reply.body }}",
+        "options": {
+          "senderName": "Support Team"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        672,
+        -448
+      ],
+      "id": "e25db3b4-3945-4eb6-ab99-8eeeb83b774e",
+      "name": "Reply to a message",
+      "webhookId": "8709e6b5-33e5-4240-8164-5f99afd1b16e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YmrnsiohiNuJ4bDP",
+          "name": "Gmail OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "from": "+14155238886",
+        "to": "+94713871805",
+        "toWhatsapp": true,
+        "message": "={{ $json.output.sms_message }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        672,
+        -256
+      ],
+      "id": "9c917e11-c328-4982-bc7d-b3e9f299bf54",
+      "name": "Send WhatsApp message",
+      "credentials": {
+        "twilioApi": {
+          "id": "9DQXXSjnMGTRuMr0",
+          "name": "Twilio Auth Token"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Discord",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Reply to a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a Support Ticket": {
+      "main": [
+        []
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Create a Support Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a Feature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send WhatsApp message": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6abaf270-9067-4ec3-aa3e-fa2ae8d891c3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6a8a747e3139b293141370b369aaceef5a6d99d8589d2f9852857e4c79a81f7e"
+  },
+  "id": "LqC6w4G1dmhzKRFH",
+  "tags": []
+}
