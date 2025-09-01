@@ -55,6 +55,6 @@ jobs:
       env:
         HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
       run: |
-        heroku git:remote -a eventlyfy
+        heroku git:remote -a nuturepath
         git filter-branch -- --all
         git push heroku main --force
