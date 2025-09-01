@@ -19,7 +19,7 @@ const Header: React.FC = () => {
         {/* Logo */}
         <Link to="/" className="flex items-center">
           <span className="text-2xl font-bold text-[#4c146c] dark:text-[#b083f7]">
-            HealthSync
+            NurturePath
           </span>
         </Link>
         {/* Desktop Navigation */}

@@ -8,7 +8,7 @@ const Footer: React.FC = () => {
           {/* Logo and description */}
           <div className="col-span-1 md:col-span-1">
             <Link to="/" className="text-2xl font-bold">
-              HealthSync
+              NurturePath
             </Link>
             <p className="mt-4 text-gray-300">
               Improving healthcare coordination and vaccine management for
@@ -75,7 +75,7 @@ const Footer: React.FC = () => {
         </div>
         <div className="border-t border-gray-700 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-300">
-            © {new Date().getFullYear()} HealthSync. All rights reserved.
+            © {new Date().getFullYear()} NurturePath. All rights reserved.
           </p>
           <div className="flex space-x-4 mt-4 md:mt-0">
             <Link to="/privacy" className="text-gray-300 hover:text-white transition-colors">

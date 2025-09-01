@@ -26,6 +26,11 @@ namespace ServerApp.Data
         public DbSet<MessageReadStatus> MessageReadStatuses { get; set; } // Message read tracking
         public DbSet<PatientProviderRelationship> PatientProviderRelationships { get; set; } // Provider-patient relationships
         public DbSet<FamilyAccess> FamilyAccesses { get; set; } // Family member access permissions
+        
+        // Patient care coordination entities
+        public DbSet<Patient> Patients { get; set; } // Patient records with medical information
+        public DbSet<PatientAlert> PatientAlerts { get; set; } // Patient alerts and notifications
+        public DbSet<CareTask> CareTasks { get; set; } // Care coordination tasks
 
         /// <summary>
         /// Configures entity relationships and database schema
@@ -140,6 +145,72 @@ namespace ServerApp.Data
             modelBuilder.Entity<User>()
                 .Property(u => u.LastName)
                 .HasMaxLength(50);
+
+            // Patient relationships and constraints
+            modelBuilder.Entity<Patient>()
+                .HasOne(p => p.User)
+                .WithOne()
+                .HasForeignKey<Patient>(p => p.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Patient>()
+                .HasOne(p => p.PrimaryCareManager)
+                .WithMany()
+                .HasForeignKey(p => p.PrimaryCareManagerId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Patient alert relationships
+            modelBuilder.Entity<PatientAlert>()
+                .HasOne(pa => pa.Patient)
+                .WithMany(p => p.Alerts)
+                .HasForeignKey(pa => pa.PatientId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<PatientAlert>()
+                .HasOne(pa => pa.AcknowledgedBy)
+                .WithMany()
+                .HasForeignKey(pa => pa.AcknowledgedById)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Care task relationships
+            modelBuilder.Entity<CareTask>()
+                .HasOne(ct => ct.Patient)
+                .WithMany(p => p.CareTasks)
+                .HasForeignKey(ct => ct.PatientId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CareTask>()
+                .HasOne(ct => ct.AssignedTo)
+                .WithMany()
+                .HasForeignKey(ct => ct.AssignedToId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<CareTask>()
+                .HasOne(ct => ct.CreatedBy)
+                .WithMany()
+                .HasForeignKey(ct => ct.CreatedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure field constraints for new entities
+            modelBuilder.Entity<Patient>()
+                .Property(p => p.PhoneNumber)
+                .HasMaxLength(20);
+
+            modelBuilder.Entity<Patient>()
+                .Property(p => p.EmergencyContactName)
+                .HasMaxLength(100);
+
+            modelBuilder.Entity<Patient>()
+                .Property(p => p.Address)
+                .HasMaxLength(200);
+
+            modelBuilder.Entity<PatientAlert>()
+                .Property(pa => pa.Message)
+                .HasMaxLength(500);
+
+            modelBuilder.Entity<CareTask>()
+                .Property(ct => ct.Title)
+                .HasMaxLength(200);
         }
     }
 }

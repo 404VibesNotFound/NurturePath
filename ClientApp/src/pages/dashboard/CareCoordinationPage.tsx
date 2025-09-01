@@ -1,47 +1,125 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Card, { CardContent, CardHeader } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
-import { Search, Filter, AlertTriangle, CheckCircle, MoreVertical } from 'lucide-react';
+import Input from '../../components/ui/Input';
+import { Search, Filter, AlertTriangle, CheckCircle, MoreVertical, Plus, X, Calendar, Phone, Mail, MapPin } from 'lucide-react';
+import { patientService, Patient, CreatePatientRequest } from '../../services/patientService';
+import { useAuth } from '../../hooks/useAuth';
+
 const CareCoordinationPage: React.FC = () => {
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  // Mock patient data
-  const patients = [{
-    id: 1,
-    name: 'Amal Mendis',
-    age: 45,
-    status: 'critical',
-    lastVisit: '2023-10-15',
-    careManager: 'Dr. Silva'
-  }, {
-    id: 2,
-    name: 'Kumari Jayawardena',
-    age: 32,
-    status: 'stable',
-    lastVisit: '2023-10-12',
-    careManager: 'Dr. Perera'
-  }, {
-    id: 3,
-    name: 'Saman Fernando',
-    age: 58,
-    status: 'improving',
-    lastVisit: '2023-10-10',
-    careManager: 'Dr. Silva'
-  }, {
-    id: 4,
-    name: 'Priya Wickramasinghe',
-    age: 29,
-    status: 'stable',
-    lastVisit: '2023-10-05',
-    careManager: 'Dr. Gunawardena'
-  }, {
-    id: 5,
-    name: 'Nimal Perera',
-    age: 62,
-    status: 'critical',
-    lastVisit: '2023-10-01',
-    careManager: 'Dr. Silva'
-  }];
-  const filteredPatients = patients.filter(patient => patient.name.toLowerCase().includes(searchTerm.toLowerCase()) || patient.status.toLowerCase().includes(searchTerm.toLowerCase()) || patient.careManager.toLowerCase().includes(searchTerm.toLowerCase()));
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [showAddPatient, setShowAddPatient] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Form state for new patient
+  const [newPatient, setNewPatient] = useState<CreatePatientRequest>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    dateOfBirth: '',
+    gender: 'Female',
+    phoneNumber: '',
+    address: '',
+    city: '',
+    state: '',
+    postalCode: '',
+    bloodType: '',
+    allergies: '',
+    currentMedications: '',
+    medicalHistory: '',
+    emergencyContactName: '',
+    emergencyContactPhone: '',
+    emergencyContactRelationship: '',
+    primaryCareManagerId: undefined
+  });
+
+  // Load patients data
+  useEffect(() => {
+    loadPatients();
+  }, []);
+
+  const loadPatients = async () => {
+    try {
+      setIsLoading(true);
+      const response = await patientService.getPatients(1, 50);
+      setPatients(response.patients);
+    } catch (err) {
+      setError('Failed to load patients');
+      console.error('Error loading patients:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddPatient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(''); // Clear any previous errors
+    setSuccessMessage(''); // Clear any previous success messages
+    
+    try {
+      const result = await patientService.createPatient(newPatient);
+      console.log('Patient creation result:', result);
+      
+      // Reset form and close modal on success
+      setShowAddPatient(false);
+      setNewPatient({
+        firstName: '',
+        lastName: '',
+        email: '',
+        dateOfBirth: '',
+        gender: 'Female',
+        phoneNumber: '',
+        address: '',
+        city: '',
+        state: '',
+        postalCode: '',
+        bloodType: '',
+        allergies: '',
+        currentMedications: '',
+        medicalHistory: '',
+        emergencyContactName: '',
+        emergencyContactPhone: '',
+        emergencyContactRelationship: '',
+        primaryCareManagerId: undefined
+      });
+      
+      // Reload the patients list to show the new patient
+      await loadPatients();
+      
+      // Show success message
+      setSuccessMessage('Patient created successfully!');
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccessMessage(''), 3000);
+      
+    } catch (err) {
+      console.error('Error creating patient:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create patient';
+      setError(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Helper function to display age properly
+  const displayAge = (age: number) => {
+    if (age < 0) {
+      return 'N/A'; // Handle invalid age calculations
+    }
+    return age.toString();
+  };
+
+  const filteredPatients = patients.filter(patient => 
+    patient.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    patient.status.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    (patient.primaryCareManager && patient.primaryCareManager.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
   // Mock alerts data
   const alerts = [{
     id: 1,
@@ -97,6 +175,33 @@ const CareCoordinationPage: React.FC = () => {
           Manage patient care plans and coordinate with your healthcare team.
         </p>
       </div>
+
+      {/* Success/Error Messages */}
+      {successMessage && (
+        <div className="bg-green-50 border border-green-200 rounded-md p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <CheckCircle className="h-5 w-5 text-green-400" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-green-800">{successMessage}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-md p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <AlertTriangle className="h-5 w-5 text-red-400" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-red-800">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Search and Filter */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-grow">
@@ -109,7 +214,10 @@ const CareCoordinationPage: React.FC = () => {
           <Filter size={18} className="mr-2" />
           Filters
         </Button>
-        <Button variant="primary">Add New Patient</Button>
+        <Button variant="primary" onClick={() => setShowAddPatient(true)}>
+          <Plus size={18} className="mr-2" />
+          Add New Patient
+        </Button>
       </div>
       {/* Main content grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -122,7 +230,23 @@ const CareCoordinationPage: React.FC = () => {
               </h2>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
+              {isLoading ? (
+                <div className="p-6 text-center">
+                  <p className="text-gray-500">Loading patients...</p>
+                </div>
+              ) : error ? (
+                <div className="p-6 text-center">
+                  <p className="text-red-500">{error}</p>
+                  <Button 
+                    variant="outline" 
+                    onClick={loadPatients}
+                    className="mt-2"
+                  >
+                    Retry
+                  </Button>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
@@ -161,19 +285,22 @@ const CareCoordinationPage: React.FC = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-gray-500">
-                          {patient.age}
+                          {displayAge(patient.age)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                            ${patient.status === 'critical' ? 'bg-red-100 text-red-800' : patient.status === 'stable' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                            ${patient.status === 'Critical' ? 'bg-red-100 text-red-800' : 
+                              patient.status === 'Stable' ? 'bg-green-100 text-green-800' : 
+                              patient.status === 'Improving' ? 'bg-blue-100 text-blue-800' :
+                              'bg-yellow-100 text-yellow-800'}`}>
                             {patient.status}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-gray-500">
-                          {patient.lastVisit}
+                          {patient.lastVisitDate ? new Date(patient.lastVisitDate).toLocaleDateString() : 'No visits'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-gray-500">
-                          {patient.careManager}
+                          {patient.primaryCareManager || 'Unassigned'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <button className="text-[#4c146c] hover:text-[#b083f7]">
@@ -183,7 +310,8 @@ const CareCoordinationPage: React.FC = () => {
                       </tr>)}
                   </tbody>
                 </table>
-              </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -242,6 +370,286 @@ const CareCoordinationPage: React.FC = () => {
           </Card>
         </div>
       </div>
+
+      {/* Add New Patient Modal */}
+      {showAddPatient && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-screen overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-gray-800">Add New Patient</h2>
+                <button
+                  onClick={() => setShowAddPatient(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <form onSubmit={handleAddPatient} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      First Name *
+                    </label>
+                    <Input
+                      type="text"
+                      required
+                      value={newPatient.firstName}
+                      onChange={(e) => setNewPatient({ ...newPatient, firstName: e.target.value })}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Last Name *
+                    </label>
+                    <Input
+                      type="text"
+                      required
+                      value={newPatient.lastName}
+                      onChange={(e) => setNewPatient({ ...newPatient, lastName: e.target.value })}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Email *
+                    </label>
+                    <Input
+                      type="email"
+                      required
+                      value={newPatient.email}
+                      onChange={(e) => setNewPatient({ ...newPatient, email: e.target.value })}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Phone Number *
+                    </label>
+                    <Input
+                      type="tel"
+                      required
+                      value={newPatient.phoneNumber}
+                      onChange={(e) => setNewPatient({ ...newPatient, phoneNumber: e.target.value })}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Date of Birth *
+                    </label>
+                    <Input
+                      type="date"
+                      required
+                      value={newPatient.dateOfBirth}
+                      onChange={(e) => setNewPatient({ ...newPatient, dateOfBirth: e.target.value })}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Gender *
+                    </label>
+                    <select
+                      required
+                      value={newPatient.gender}
+                      onChange={(e) => setNewPatient({ ...newPatient, gender: e.target.value as 'Female' | 'Male' | 'Other' | 'PreferNotToSay' })}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="Female">Female</option>
+                      <option value="Male">Male</option>
+                      <option value="Other">Other</option>
+                      <option value="PreferNotToSay">Prefer not to say</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Address
+                  </label>
+                  <Input
+                    type="text"
+                    value={newPatient.address}
+                    onChange={(e) => setNewPatient({ ...newPatient, address: e.target.value })}
+                    className="w-full"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      City
+                    </label>
+                    <Input
+                      type="text"
+                      value={newPatient.city}
+                      onChange={(e) => setNewPatient({ ...newPatient, city: e.target.value })}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      State
+                    </label>
+                    <Input
+                      type="text"
+                      value={newPatient.state}
+                      onChange={(e) => setNewPatient({ ...newPatient, state: e.target.value })}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Postal Code
+                    </label>
+                    <Input
+                      type="text"
+                      value={newPatient.postalCode}
+                      onChange={(e) => setNewPatient({ ...newPatient, postalCode: e.target.value })}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Blood Type
+                    </label>
+                    <Input
+                      type="text"
+                      value={newPatient.bloodType}
+                      onChange={(e) => setNewPatient({ ...newPatient, bloodType: e.target.value })}
+                      className="w-full"
+                      placeholder="e.g., A+, O-, AB+"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Allergies
+                    </label>
+                    <Input
+                      type="text"
+                      value={newPatient.allergies}
+                      onChange={(e) => setNewPatient({ ...newPatient, allergies: e.target.value })}
+                      className="w-full"
+                      placeholder="e.g., Penicillin, Peanuts"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Current Medications
+                  </label>
+                  <textarea
+                    value={newPatient.currentMedications}
+                    onChange={(e) => setNewPatient({ ...newPatient, currentMedications: e.target.value })}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    rows={3}
+                    placeholder="List current medications and dosages"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Medical History
+                  </label>
+                  <textarea
+                    value={newPatient.medicalHistory}
+                    onChange={(e) => setNewPatient({ ...newPatient, medicalHistory: e.target.value })}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    rows={3}
+                    placeholder="Relevant medical history"
+                  />
+                </div>
+
+                <div className="border-t pt-4">
+                  <h3 className="text-lg font-medium text-gray-800 mb-4">Emergency Contact</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Emergency Contact Name *
+                      </label>
+                      <Input
+                        type="text"
+                        required
+                        value={newPatient.emergencyContactName}
+                        onChange={(e) => setNewPatient({ ...newPatient, emergencyContactName: e.target.value })}
+                        className="w-full"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Emergency Contact Phone *
+                      </label>
+                      <Input
+                        type="tel"
+                        required
+                        value={newPatient.emergencyContactPhone}
+                        onChange={(e) => setNewPatient({ ...newPatient, emergencyContactPhone: e.target.value })}
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Relationship *
+                    </label>
+                    <Input
+                      type="text"
+                      required
+                      value={newPatient.emergencyContactRelationship}
+                      onChange={(e) => setNewPatient({ ...newPatient, emergencyContactRelationship: e.target.value })}
+                      className="w-full"
+                      placeholder="e.g., Spouse, Parent, Sibling"
+                    />
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                    <p className="text-red-800 text-sm">{error}</p>
+                  </div>
+                )}
+
+                {successMessage && (
+                  <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                    <p className="text-green-800 text-sm">{successMessage}</p>
+                  </div>
+                )}
+
+                <div className="flex justify-end space-x-3 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowAddPatient(false)}
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Creating...' : 'Create Patient'}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>;
 };
 export default CareCoordinationPage;

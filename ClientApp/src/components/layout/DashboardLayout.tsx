@@ -50,7 +50,7 @@ const DashboardLayout: React.FC = () => {
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={toggleSidebar}></div>
         <div className="fixed inset-y-0 left-0 flex flex-col w-64 max-w-xs bg-white dark:bg-gray-800 shadow-lg">
           <div className="flex items-center justify-between h-16 px-6 bg-[#4c146c] text-white">
-            <span className="text-xl font-semibold">HealthSync</span>
+            <span className="text-xl font-semibold">NurturePath</span>
             <button className="text-white" onClick={toggleSidebar} aria-label="Close sidebar">
               <X size={24} />
             </button>
@@ -87,7 +87,7 @@ const DashboardLayout: React.FC = () => {
           <div className="flex flex-col flex-grow pt-5 overflow-y-auto bg-white dark:bg-gray-800 border-r dark:border-gray-700">
             <div className="flex items-center flex-shrink-0 px-6">
               <span className="text-xl font-semibold text-[#4c146c] dark:text-[#b083f7]">
-                HealthSync
+                NurturePath
               </span>
             </div>
             <div className="mt-8 flex-1">
