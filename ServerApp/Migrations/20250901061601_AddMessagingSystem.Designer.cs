@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ServerApp.Data;
@@ -11,9 +12,11 @@ using ServerApp.Data;
 namespace ServerApp.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20250901061601_AddMessagingSystem")]
+    partial class AddMessagingSystem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -63,7 +66,7 @@ namespace ServerApp.Migrations
 
                     b.HasIndex("PatientId");
 
-                    b.ToTable("FamilyAccesses", (string)null);
+                    b.ToTable("FamilyAccesses");
                 });
 
             modelBuilder.Entity("ServerApp.Data.Models.Message", b =>
@@ -124,7 +127,7 @@ namespace ServerApp.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("Messages", (string)null);
+                    b.ToTable("Messages");
                 });
 
             modelBuilder.Entity("ServerApp.Data.Models.MessageAttachment", b =>
@@ -162,7 +165,7 @@ namespace ServerApp.Migrations
 
                     b.HasIndex("MessageId");
 
-                    b.ToTable("MessageAttachments", (string)null);
+                    b.ToTable("MessageAttachments");
                 });
 
             modelBuilder.Entity("ServerApp.Data.Models.MessageReadStatus", b =>
@@ -189,7 +192,7 @@ namespace ServerApp.Migrations
                     b.HasIndex("MessageId", "UserId")
                         .IsUnique();
 
-                    b.ToTable("MessageReadStatuses", (string)null);
+                    b.ToTable("MessageReadStatuses");
                 });
 
             modelBuilder.Entity("ServerApp.Data.Models.PatientProviderRelationship", b =>
@@ -228,7 +231,7 @@ namespace ServerApp.Migrations
                     b.HasIndex("PatientId", "ProviderId", "RelationshipType")
                         .IsUnique();
 
-                    b.ToTable("PatientProviderRelationships", (string)null);
+                    b.ToTable("PatientProviderRelationships");
                 });
 
             modelBuilder.Entity("ServerApp.Data.Models.Todo", b =>
@@ -245,7 +248,7 @@ namespace ServerApp.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Todos", (string)null);
+                    b.ToTable("Todos");
                 });
 
             modelBuilder.Entity("ServerApp.Data.Models.User", b =>
@@ -304,7 +307,7 @@ namespace ServerApp.Migrations
 
                     b.HasIndex("UserGroupId");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("ServerApp.Data.Models.UserGroup", b =>
@@ -320,7 +323,7 @@ namespace ServerApp.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("UserGroups", (string)null);
+                    b.ToTable("UserGroups");
                 });
 
             modelBuilder.Entity("ServerApp.Data.Models.FamilyAccess", b =>

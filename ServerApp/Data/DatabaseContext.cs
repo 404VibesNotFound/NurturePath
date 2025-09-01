@@ -25,7 +25,7 @@ namespace ServerApp.Data
         public DbSet<MessageAttachment> MessageAttachments { get; set; } // File attachments for messages
         public DbSet<MessageReadStatus> MessageReadStatuses { get; set; } // Message read tracking
         public DbSet<PatientProviderRelationship> PatientProviderRelationships { get; set; } // Provider-patient relationships
-        public DbSet<FamilyAccess> FamilyAccess { get; set; } // Family member access permissions
+        public DbSet<FamilyAccess> FamilyAccesses { get; set; } // Family member access permissions
 
         /// <summary>
         /// Configures entity relationships and database schema
@@ -68,7 +68,7 @@ namespace ServerApp.Data
             // Message attachment relationships
             modelBuilder.Entity<MessageAttachment>()
                 .HasOne(ma => ma.Message)
-                .WithMany(m => m.MessageAttachments)
+                .WithMany(m => m.Attachments)
                 .HasForeignKey(ma => ma.MessageId)
                 .OnDelete(DeleteBehavior.Cascade);
 

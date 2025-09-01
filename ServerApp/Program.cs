@@ -56,6 +56,11 @@ builder.Services.AddDbContext<DatabaseContext>(
 // Register dependency injection services
 builder.Services.AddScoped<IAuthRepository, AuthRepository>(); // Authentication repository
 builder.Services.AddScoped<ITodoRepository, TodoRepository>(); // Todo repository
+builder.Services.AddScoped<IMessageRepository, MessageRepository>(); // Message repository
+
+// Register HTTP client and SMS service
+builder.Services.AddHttpClient(); // HTTP client for external API calls
+builder.Services.AddScoped<ServerApp.Services.ISmsService, ServerApp.Services.VonageSmsService>(); // SMS service
 
 // Add MVC controllers support
 builder.Services.AddControllers();

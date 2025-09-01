@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Menu, X, Home, Calendar, Users, Settings, HelpCircle, LogOut, Moon, Sun } from 'lucide-react';
+import { Menu, X, Home, Calendar, Users, Settings, HelpCircle, LogOut, Moon, Sun, MessageSquare, Smartphone } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
 const DashboardLayout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -23,6 +23,14 @@ const DashboardLayout: React.FC = () => {
     name: 'Care Coordination',
     href: '/dashboard/care-coordination',
     icon: Users
+  }, {
+    name: 'Messages',
+    href: '/dashboard/messages',
+    icon: MessageSquare
+  }, {
+    name: 'SMS',
+    href: '/dashboard/sms',
+    icon: Smartphone
   }, {
     name: 'Vaccines',
     href: '/dashboard/vaccines',

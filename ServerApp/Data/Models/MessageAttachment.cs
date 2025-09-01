@@ -26,12 +26,17 @@ namespace ServerApp.Data.Models
         /// <summary>
         /// MIME type of the file
         /// </summary>
-        public string ContentType { get; set; } = string.Empty;
+        public string FileType { get; set; } = string.Empty;
         
         /// <summary>
-        /// Encrypted path where the file is stored
+        /// File content stored as binary data (for small files)
         /// </summary>
-        public string FilePath { get; set; } = string.Empty;
+        public byte[]? FileContent { get; set; }
+        
+        /// <summary>
+        /// Encrypted path where the file is stored (for large files)
+        /// </summary>
+        public string? FilePath { get; set; }
         
         /// <summary>
         /// When the file was uploaded

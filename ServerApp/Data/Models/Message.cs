@@ -65,9 +65,9 @@ namespace ServerApp.Data.Models
         public int? ReplyToMessageId { get; set; }
         
         /// <summary>
-        /// When the message was created
+        /// When the message was sent
         /// </summary>
-        public DateTime CreatedAt { get; set; }
+        public DateTime SentAt { get; set; }
         
         /// <summary>
         /// When the message was last updated
@@ -79,7 +79,7 @@ namespace ServerApp.Data.Models
         public virtual User Receiver { get; set; } = null!;
         public virtual Message? ReplyToMessage { get; set; }
         public virtual ICollection<Message> Replies { get; set; } = new List<Message>();
-        public virtual ICollection<MessageAttachment> MessageAttachments { get; set; } = new List<MessageAttachment>();
+        public virtual ICollection<MessageAttachment> Attachments { get; set; } = new List<MessageAttachment>();
         public virtual ICollection<MessageReadStatus> ReadStatuses { get; set; } = new List<MessageReadStatus>();
     }
     

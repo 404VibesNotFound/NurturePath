@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import Card, { CardContent, CardFooter } from '../components/ui/Card';
 import Input from '../components/ui/Input';
@@ -8,7 +8,11 @@ import { useAuth } from '../contexts/AuthContext';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, isLoading } = useAuth();
+  
+  // Get the intended destination from location state, default to dashboard
+  const from = location.state?.from?.pathname || '/dashboard';
   
   const [formData, setFormData] = useState({
     emailOrUsername: '',
@@ -66,8 +70,8 @@ const LoginPage: React.FC = () => {
         password: formData.password
       });
       
-      // Redirect to dashboard after successful login
-      navigate('/dashboard');
+      // Redirect to intended destination or dashboard after successful login
+      navigate(from, { replace: true });
     } catch (error) {
       setLoginError(error instanceof Error ? error.message : 'Login failed. Please try again.');
     }
