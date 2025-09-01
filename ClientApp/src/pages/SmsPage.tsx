@@ -5,6 +5,33 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 
+// Type definitions for SMS results
+interface SmsResult {
+    PhoneNumber: string;
+    Success: boolean;
+    ErrorMessage: string;
+}
+
+interface SingleSmsResponse {
+    type: 'single';
+    success: boolean;
+    message: string;
+}
+
+interface BulkSmsResponse {
+    type: 'bulk';
+    success: boolean;
+    message: string;
+    results: SmsResult[];
+    summary: {
+        TotalSent: number;
+        TotalFailed: number;
+        TotalRequested: number;
+    };
+}
+
+type SmsResponseResult = SingleSmsResponse | BulkSmsResponse;
+
 /// <summary>
 /// SMS messaging page component for sending text messages
 /// Allows sending messages to individual recipients or multiple recipients
@@ -15,7 +42,7 @@ export const SmsPage: React.FC = () => {
     const [phoneNumbers, setPhoneNumbers] = useState('');
     const [message, setMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [results, setResults] = useState<any>(null);
+    const [results, setResults] = useState<SmsResponseResult | null>(null);
     const [error, setError] = useState('');
     const [activeTab, setActiveTab] = useState<'single' | 'bulk'>('single');
 
@@ -50,11 +77,9 @@ export const SmsPage: React.FC = () => {
 
             const data = await response.json();
 
-            if (response.ok && data.Success) {
-                setResults({ type: 'single', success: true, message: data.Message });
-                setPhoneNumber('');
-                setMessage('');
-            }
+            setResults({ type: 'single', success: true, message: data.Message });
+            setPhoneNumber('');
+            setMessage('');
         } catch (err) {
             setError('Network error occurred');
             console.error('SMS send error:', err);
@@ -164,7 +189,7 @@ export const SmsPage: React.FC = () => {
                         <div>
                             <h4 className="font-medium mb-2">Detailed Results:</h4>
                             <div className="max-h-40 overflow-y-auto">
-                                {results.results.map((result: any, index: number) => (
+                                {results.results.map((result: SmsResult, index: number) => (
                                     <div key={index} className={`p-2 mb-1 rounded text-sm ${
                                         result.Success ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
                                     }`}>

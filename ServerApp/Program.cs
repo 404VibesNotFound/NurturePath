@@ -50,8 +50,27 @@ if (!builder.Environment.IsDevelopment())
     secret = Environment.GetEnvironmentVariable("APPSETTINGS_SECRET");
 }
 
-builder.Services.AddDbContext<DatabaseContext>(
-    x => x.UseNpgsql(connectionString));
+builder.Services.AddDbContext<DatabaseContext>(options =>
+{
+    options.UseNpgsql(connectionString, npgsqlOptions =>
+    {
+        // Enable retry on failure with exponential backoff
+        npgsqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(30),
+            errorCodesToAdd: null);
+        
+        // Set command timeout to 60 seconds
+        npgsqlOptions.CommandTimeout(60);
+    });
+    
+    // Enable sensitive data logging in development
+    if (builder.Environment.IsDevelopment())
+    {
+        options.EnableSensitiveDataLogging();
+        options.EnableDetailedErrors();
+    }
+});
 
 // Register dependency injection services
 builder.Services.AddScoped<IAuthRepository, AuthRepository>(); // Authentication repository
@@ -66,6 +85,11 @@ builder.Services.AddScoped<ServerApp.Services.ISmsService, ServerApp.Services.Vo
 builder.Services.AddControllers();
 // Add API explorer for Swagger documentation
 builder.Services.AddEndpointsApiExplorer();
+
+// Add health checks for database monitoring
+builder.Services.AddHealthChecks()
+    .AddNpgSql(connectionString!, name: "database", timeout: TimeSpan.FromSeconds(30));
+
 // Configure Swagger/OpenAPI documentation with JWT authentication
 builder.Services.AddSwaggerGen(options =>
 {

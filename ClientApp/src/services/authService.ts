@@ -71,7 +71,7 @@ class AuthService {
   /**
    * Register new user
    */
-  async register(userData: RegisterRequest): Promise<any> {
+  async register(userData: RegisterRequest): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/auth/register`, {
       method: 'POST',
       headers: {
@@ -136,7 +136,7 @@ class AuthService {
   /**
    * Get authorization header for API requests
    */
-  getAuthHeader(): { Authorization: string } | {} {
+  getAuthHeader(): { Authorization: string } | Record<string, never> {
     const token = this.getToken();
     return token ? { Authorization: `Bearer ${token}` } : {};
   }

@@ -4,7 +4,7 @@ import MainLayout from '../components/layout/MainLayout';
 import Card, { CardContent, CardFooter } from '../components/ui/Card';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
